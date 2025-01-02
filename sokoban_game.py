@@ -13,7 +13,7 @@ class Base:
 # - True: there exists a box here
 # - False: there doesn't exist a box here
 class Tile:
-    def _init_(self, base=Base.NONE, box=False):
+    def __init__(self, base=Base.NONE, box=False):
         self.base = base
         self.box = box
 
@@ -24,8 +24,13 @@ class Tile:
 
 # Function to initialize the board to default values
 def init_board(board):
-    pass
+    for i in range(ROWS):
+        row = []
+        for i in range(COLS):
+            row.append(Tile())
+        board.append(row)
     
+
 # Helper function to print a line the width of the sokoban board
 def print_line():
     print('-' * (COLS * 4 + 1))
@@ -33,15 +38,36 @@ def print_line():
 # Helper function to print the title above the sokoban board
 def print_title():
     print_line()
-    title = "S O K O B A N"
-    pass
+    title = "|             S O K O B A N             |"
+    print(title)
+
 
 # Function to print the current state of the sokoban board
 # It will place the player on the board at position player_row, player_col
 # If player position is out of bounds, it won't place a player anywhere
 def print_board(board, player_row, player_col):
+
     print_title()
-    pass
+    for i in range(ROWS):
+        print_line()
+        for j in range(COLS):
+            print("|", end="")
+            tile = board[i][j]
+            if i == player_row and j == player_col:
+                print("^_^", end="")
+            elif tile.base == Base.WALL:
+                print("===", end="")
+            elif tile.box == True and tile.base == Base.STORAGE:
+                print("[o]", end="") 
+            elif tile.box == True:
+                print("[ ]", end="")
+            elif tile.base == Base.STORAGE:
+                print(" o ", end="")
+            else:
+                print("   ", end="")
+        print("|")
+    print_line()
+ 
 
 
 ################################################################################
