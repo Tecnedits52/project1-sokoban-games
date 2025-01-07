@@ -84,11 +84,20 @@ def print_board(board, player_row, player_col):
 def main():
     board = []
     init_board(board)
+    print("=== Level Setup ===")
+    while True:
+        try:
+            command, row, col = input().split(" ")
+            row = int(row)
+            col = int(col)
+            if command == "w":
+                board[row][col].base = Base.WALL
+            elif command == "s":
+                board[row][col].base = Base.STORAGE
+            print_board(board, -1, -1)
+        except KeyboardInterrupt:
+            break
 
-    # TODO: add your code (and remove this todo)
-
-    # prints the board with no player, you might want to delete this...
-    print_board(board, -1, -1)
 
 if __name__ == "__main__":
     main()
