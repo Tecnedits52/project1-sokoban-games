@@ -75,11 +75,15 @@ def print_board(board, player_row, player_col):
 ################################################################################
 
 # TODO: Your function implementations go here
+def is_outofbounds(row,col):
+    if (row > 9 or row < 0) or (col > 9 or col < 0):
+        return True
+    return False
 
 
 ################################################################################
 ############################## MAIN FUNCTIONS ##################################
-################################################################################
+###############################################################################
 
 def main():
     board = []
@@ -90,6 +94,10 @@ def main():
             command, row, col = input().split(" ")
             row = int(row)
             col = int(col)
+            if is_outofbounds(row,col) == True:
+                print("Location out of bounds")
+                print_board(board, -1, -1)
+                continue
             if command == "w":
                 board[row][col].base = Base.WALL
             elif command == "s":
