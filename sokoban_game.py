@@ -91,7 +91,18 @@ def player_is_valid(p_row,p_col,board):
         else:
             return True
 
-
+def set_player_location(board):
+    while True:
+        print("Enter player starting position:", end=" ")
+        p_row, p_col = input().split(" ")
+        p_row = int(p_row )
+        p_col = int(p_col) 
+        if player_is_valid(p_row,p_col,board) == True:
+            print("\n=== Starting Sokoban! ===\n")
+            print_board(board,p_row,p_col)
+        else:
+            print(f"Position ({p_row}, {p_col}) is invalid\n")
+            continue
 ################################################################################
 ############################## MAIN FUNCTIONS ##################################
 ###############################################################################
@@ -102,22 +113,10 @@ def main():
     print("=== Level Setup ===")
     line = []
     while True:
-        
         try:
             line = input("> ").split(" ")
             if line[0] == "q":
-                while True:
-                    print("Enter player starting position:", end=" ")
-                    p_row, p_col = input().split(" ")
-                    p_row = int(p_row )
-                    p_col = int(p_col) 
-                    if player_is_valid(p_row,p_col,board) == True:
-                        print("\n=== Starting Sokoban! ===\n")
-                        print_board(board,p_row,p_col)
-                    else:
-                        print(f"Position ({p_row}, {p_col}) is invalid\n")
-                        continue
-                    
+                set_player_location(board)
             elif len(line) == 5:
                 command = line[0]
                 row1 = int(line[1])
