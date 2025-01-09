@@ -89,19 +89,56 @@ def main():
     board = []
     init_board(board)
     print("=== Level Setup ===")
+    line = []
     while True:
+        
         try:
-            command, row, col = input().split(" ")
-            row = int(row)
-            col = int(col)
-            if is_outofbounds(row,col) == True:
-                print("Location out of bounds")
-                print_board(board, -1, -1)
+            line = input("> ").split(" ")
+            if len(line) == 5:
+                command = line[0]
+                row1 = int(line[1])
+                col1 = int(line[2])
+                row2 = int(line[3])
+                col2 = int(line[4])
+            elif len(line) == 3:
+                command = line[0]
+                row = int(line[1])
+                col = int(line[2])
+                if is_outofbounds(row,col) == True:
+                    print("Location out of bounds")
+                    print_board(board, -1, -1)
+                    continue
+            else:
                 continue
+            
             if command == "w":
                 board[row][col].base = Base.WALL
+                board[row][col].box = False
             elif command == "s":
                 board[row][col].base = Base.STORAGE
+            elif command == "b":
+                if board[row][col].base == Base.WALL:
+                    board[row][col].base = Base.NONE
+                    board[row][col].box = True
+                else:
+                    board[row][col].box = True
+            elif command == "W":
+                if is_outofbounds(row1,col1) and is_outofbounds(row2,col2):
+                    print("Location out of bounds")
+                    print_board(board, -1, -1)
+                    continue
+                if row1 == row2:
+                    for i in range(col1,col2+1):
+                        if not is_outofbounds(row1,i):
+                            board[row1][i].base = Base.WALL
+                            board[row1][i].box = False    
+                if col1 == col2:
+                    for i in range(row1, row2+1):
+                        if not is_outofbounds(i,col1):
+                            board[i][col1].base = Base.WALL
+                            board[i][col1].box = False
+                
+
             print_board(board, -1, -1)
         except KeyboardInterrupt:
             break
