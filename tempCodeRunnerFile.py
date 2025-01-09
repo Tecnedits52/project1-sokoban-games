@@ -1,2 +1,1 @@
-
-    print("=== Level Setup ===")
+rint_board(board, -1, -1)

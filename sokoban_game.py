@@ -80,6 +80,17 @@ def is_outofbounds(row,col):
         return True
     return False
 
+def player_is_valid(p_row,p_col,board):
+    if is_outofbounds(p_row,p_col) == True:
+        return False
+    else:
+        if board[p_row][p_col].base == Base.WALL:
+            return False
+        elif board[p_row][p_col].box == True:
+            return False
+        else:
+            return True
+
 
 ################################################################################
 ############################## MAIN FUNCTIONS ##################################
@@ -94,7 +105,20 @@ def main():
         
         try:
             line = input("> ").split(" ")
-            if len(line) == 5:
+            if line[0] == "q":
+                while True:
+                    print("Enter player starting position:", end=" ")
+                    p_row, p_col = input().split(" ")
+                    p_row = int(p_row )
+                    p_col = int(p_col) 
+                    if player_is_valid(p_row,p_col,board) == True:
+                        print("\n=== Starting Sokoban! ===\n")
+                        print_board(board,p_row,p_col)
+                    else:
+                        print(f"Position ({p_row}, {p_col}) is invalid\n")
+                        continue
+                    
+            elif len(line) == 5:
                 command = line[0]
                 row1 = int(line[1])
                 col1 = int(line[2])
@@ -107,6 +131,7 @@ def main():
                 if is_outofbounds(row,col) == True:
                     print("Location out of bounds")
                     print_board(board, -1, -1)
+
                     continue
             else:
                 continue
