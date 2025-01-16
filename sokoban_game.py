@@ -100,9 +100,49 @@ def set_player_location(board):
         if player_is_valid(p_row,p_col,board) == True:
             print("\n=== Starting Sokoban! ===\n")
             print_board(board,p_row,p_col)
+            return p_row, p_col
         else:
             print(f"Position ({p_row}, {p_col}) is invalid\n")
             continue
+        
+
+def move_player(board,p_row,p_col,move,p_counter):
+    if move == "w":
+        if board[p_row-1][p_col].base != Base.WALL:
+            p_row -= 1 
+            p_counter += 1
+        if p_row < 0:
+            p_row = 9
+
+
+
+    elif move == "a":
+        if board[p_row][p_col-1].base != Base.WALL:
+            p_col -= 1
+            p_counter += 1
+        if p_col < 0:
+            p_col = 9
+
+        
+    elif move == "s":
+        if board[(p_row+1)%ROWS][p_col].base != Base.WALL:
+            p_row += 1 
+            p_counter += 1
+        if p_row > 9:
+            p_row = 0
+
+
+        
+    elif move == "d":
+        if board[p_row][(p_col+1)%COLS].base != Base.WALL:
+            p_col += 1
+            p_counter += 1
+        if p_col > 9:
+            p_col = 0
+
+
+    
+    return p_row, p_col, p_counter
 ################################################################################
 ############################## MAIN FUNCTIONS ##################################
 ###############################################################################
@@ -116,7 +156,8 @@ def main():
         try:
             line = input("> ").split(" ")
             if line[0] == "q":
-                set_player_location(board)
+                p_row, p_col = set_player_location(board)
+                break
             elif len(line) == 5:
                 command = line[0]
                 row1 = int(line[1])
@@ -132,6 +173,7 @@ def main():
                     print_board(board, -1, -1)
 
                     continue
+                
             else:
                 continue
             
@@ -166,6 +208,21 @@ def main():
             print_board(board, -1, -1)
         except KeyboardInterrupt:
             break
+    p_counter = 0
+    while True:
+        try:
+
+            command = input("> ")
+            if command in ["w","a","s","d"]:
+                p_row, p_col, p_counter = move_player(board,p_row,p_col,command,p_counter)
+            elif command == "c":
+                print(f"Number of moves so far: {p_counter}")
+            print_board(board,p_row,p_col)
+
+
+        except KeyboardInterrupt:
+            break
+
 
 
 if __name__ == "__main__":
