@@ -105,41 +105,69 @@ def set_player_location(board):
             print(f"Position ({p_row}, {p_col}) is invalid\n")
             continue
         
+def move_box(p_row,p_col,board,direction):
+    if direction == "w":
+        if board[p_row][p_col].box == True:
+            if board[(p_row-1)%ROWS][p_col].base != Base.WALL:
+                board[p_row][p_col].box = False
+                board[(p_row-1)%ROWS][p_col].box = True
 
+    elif direction == "a":
+        if board[p_row][p_col].box == True:
+            if board[p_row][(p_col-1)%10].base != Base.WALL:
+                board[p_row][p_col].box = False
+                board[p_row][(p_col-1)%10].box = True
+
+    elif direction == "s":
+        if board[p_row][p_col].box == True:
+            if board[(p_row+1)%ROWS][p_col].base != Base.WALL:
+                board[p_row][p_col].box = False
+                board[(p_row+1)%ROWS][p_col].box = True
+
+    elif direction == "d":
+        if board[p_row][p_col].box == True:
+            if board[p_row][(p_col+1)%10].base != Base.WALL:
+                board[p_row][p_col].box = False
+                board[p_row][(p_col+1)%10].box = True
+
+
+    
+        
+
+            
 def move_player(board,p_row,p_col,move,p_counter):
+
     if move == "w":
-        if board[p_row-1][p_col].base != Base.WALL:
+        if board[p_row-1][p_col].base != Base.WALL and board[p_row-2][p_col].base != Base.WALL:
             p_row -= 1 
             p_counter += 1
         if p_row < 0:
             p_row = 9
-
-
-
+        
+        move_box(p_row,p_col,board,move)
     elif move == "a":
-        if board[p_row][p_col-1].base != Base.WALL:
+        if board[p_row][p_col-1].base != Base.WALL and board[p_row][p_col-2].base != Base.WALL:
             p_col -= 1
             p_counter += 1
         if p_col < 0:
             p_col = 9
-
+        move_box(p_row,p_col,board,move)
         
     elif move == "s":
-        if board[(p_row+1)%ROWS][p_col].base != Base.WALL:
+        if board[(p_row+1)%ROWS][p_col].base != Base.WALL and board[(p_row+2)%ROWS][p_col].base != Base.WALL:
             p_row += 1 
             p_counter += 1
         if p_row > 9:
             p_row = 0
-
-
+        move_box(p_row,p_col,board,move)
         
     elif move == "d":
-        if board[p_row][(p_col+1)%COLS].base != Base.WALL:
+        if board[p_row][(p_col+1)%COLS].base != Base.WALL and board[p_row][(p_col+2)%COLS].base != Base.WALL:
             p_col += 1
             p_counter += 1
         if p_col > 9:
             p_col = 0
-
+        move_box(p_row,p_col,board,move)
 
     
     return p_row, p_col, p_counter
