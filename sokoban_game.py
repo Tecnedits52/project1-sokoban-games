@@ -17,6 +17,13 @@ class Tile:
         self.base = base
         self.box = box
 
+class Player:
+    def __init__(self,p_row,p_col,p_counter = 0):
+        self.p_col = p_col
+        self.p_row = p_row
+        self.p_counter = p_counter
+    
+
 
 ################################################################################
 ############################## PROVIDED FUNCTIONS ##############################
@@ -104,73 +111,57 @@ def set_player_location(board):
         else:
             print(f"Position ({p_row}, {p_col}) is invalid\n")
             continue
-        
-def move_box(p_row,p_col,board,direction):
-    if direction == "w":
-        if board[p_row][p_col].box == True:
-            if board[(p_row-1)%ROWS][p_col].base != Base.WALL:
-                board[p_row][p_col].box = False
-                board[(p_row-1)%ROWS][p_col].box = True
-
-    elif direction == "a":
-        if board[p_row][p_col].box == True:
-            if board[p_row][(p_col-1)%10].base != Base.WALL:
-                board[p_row][p_col].box = False
-                board[p_row][(p_col-1)%10].box = True
-
-    elif direction == "s":
-        if board[p_row][p_col].box == True:
-            if board[(p_row+1)%ROWS][p_col].base != Base.WALL:
-                board[p_row][p_col].box = False
-                board[(p_row+1)%ROWS][p_col].box = True
-
-    elif direction == "d":
-        if board[p_row][p_col].box == True:
-            if board[p_row][(p_col+1)%10].base != Base.WALL:
-                board[p_row][p_col].box = False
-                board[p_row][(p_col+1)%10].box = True
 
 
+ 
+def move_player(board,move,player):
+    deltas = {
+        "w":(-1,0),
+        "s":(1,0),
+        "a":(0,-1),
+        "d":(0,1)
+    }
     
-        
+    # cari new_row dan new_col
+    delta_row, delta_col = deltas[move]
+    new_row = (player.p_row + delta_row)%ROWS
+    new_col = (player.p_col + delta_col)%COLS
 
-            
-def move_player(board,p_row,p_col,move,p_counter):
-
-    if move == "w":
-        if board[p_row-1][p_col].base != Base.WALL and board[p_row-2][p_col].base != Base.WALL:
-            p_row -= 1 
-            p_counter += 1
-        if p_row < 0:
-            p_row = 9
-        
-        move_box(p_row,p_col,board,move)
-    elif move == "a":
-        if board[p_row][p_col-1].base != Base.WALL and board[p_row][p_col-2].base != Base.WALL:
-            p_col -= 1
-            p_counter += 1
-        if p_col < 0:
-            p_col = 9
-        move_box(p_row,p_col,board,move)
-        
-    elif move == "s":
-        if board[(p_row+1)%ROWS][p_col].base != Base.WALL and board[(p_row+2)%ROWS][p_col].base != Base.WALL:
-            p_row += 1 
-            p_counter += 1
-        if p_row > 9:
-            p_row = 0
-        move_box(p_row,p_col,board,move)
-        
-    elif move == "d":
-        if board[p_row][(p_col+1)%COLS].base != Base.WALL and board[p_row][(p_col+2)%COLS].base != Base.WALL:
-            p_col += 1
-            p_counter += 1
-        if p_col > 9:
-            p_col = 0
-        move_box(p_row,p_col,board,move)
-
+    target_tile = board[new_row][new_col]
     
-    return p_row, p_col, p_counter
+    if target_tile.box:
+        box_new_row = (new_row+delta_row)%ROWS
+        box_new_col = (new_col+delta_col)%COLS
+
+        box_target_tile = board[box_new_row][box_new_col]
+        if box_target_tile.base != Base.WALL and not box_target_tile.box: 
+            box_target_tile.box = True
+            target_tile.box = False
+        else:
+            return
+    
+    if target_tile.base == Base.WALL:
+        return
+    else:
+        player.p_row = new_row
+        player.p_col = new_col
+        player.p_counter += 1
+  
+
+def check_win_condition(board):
+    correct = 0
+    num_box = 0
+    for i in range(ROWS):
+        for j in range(COLS):
+            if board[i][j].box == True and board[i][j].base == Base.STORAGE:
+                    correct += 1
+            if board[i][j].box == True:
+                    num_box += 1
+    if num_box == correct:
+        return True
+    else:
+        return False
+    
 ################################################################################
 ############################## MAIN FUNCTIONS ##################################
 ###############################################################################
@@ -180,11 +171,13 @@ def main():
     init_board(board)
     print("=== Level Setup ===")
     line = []
+    
     while True:
         try:
             line = input("> ").split(" ")
             if line[0] == "q":
                 p_row, p_col = set_player_location(board)
+                player = Player(p_row,p_col)
                 break
             elif len(line) == 5:
                 command = line[0]
@@ -204,7 +197,7 @@ def main():
                 
             else:
                 continue
-            
+    
             if command == "w":
                 board[row][col].base = Base.WALL
                 board[row][col].box = False
@@ -236,21 +229,26 @@ def main():
             print_board(board, -1, -1)
         except KeyboardInterrupt:
             break
-    p_counter = 0
+    
     while True:
         try:
 
             command = input("> ")
             if command in ["w","a","s","d"]:
-                p_row, p_col, p_counter = move_player(board,p_row,p_col,command,p_counter)
+                move_player(board,command,player)
+                if check_win_condition(board):
+                    if player.p_counter == 1:
+                        print(f"=== Level Solved in {player.p_counter} Move! ===")
+                    else:
+                        print(f"=== Level Solved in {player.p_counter} Moves! ===")
             elif command == "c":
-                print(f"Number of moves so far: {p_counter}")
-            print_board(board,p_row,p_col)
+                print(f"Number of moves so far: {player.p_counter}")
+            print_board(board,player.p_row,player.p_col)
 
 
         except KeyboardInterrupt:
             break
-
+                                                                                                                                                                                                                                                                                                                 
 
 
 if __name__ == "__main__":

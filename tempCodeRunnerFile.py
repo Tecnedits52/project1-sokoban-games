@@ -1,1 +1,1 @@
-rint_board(board, -1, -1)
+    
