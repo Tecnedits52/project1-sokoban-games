@@ -2,6 +2,9 @@
 ROWS = 10
 COLS = 10
 
+# Variables
+stack_move = [] 
+
 # Every tile on the map has to be one of the following values.
 class Base:
     NONE = 0
@@ -82,6 +85,7 @@ def print_board(board, player_row, player_col):
 ################################################################################
 
 # TODO: Your function implementations go here
+
 def is_outofbounds(row,col):
     if (row > 9 or row < 0) or (col > 9 or col < 0):
         return True
@@ -114,19 +118,19 @@ def set_player_location(board):
 
 
  
-def move_player(board,move,player):
+def move_player(board,move,player,):
     deltas = {
         "w":(-1,0),
         "s":(1,0),
         "a":(0,-1),
         "d":(0,1)
     }
-    
+    undo = copy_board(board)
     # cari new_row dan new_col
     delta_row, delta_col = deltas[move]
     new_row = (player.p_row + delta_row)%ROWS
     new_col = (player.p_col + delta_col)%COLS
-
+    
     target_tile = board[new_row][new_col]
     
     if target_tile.box:
@@ -137,15 +141,25 @@ def move_player(board,move,player):
         if box_target_tile.base != Base.WALL and not box_target_tile.box: 
             box_target_tile.box = True
             target_tile.box = False
+
+
+            
         else:
             return
     
     if target_tile.base == Base.WALL:
         return
     else:
+        player1 = Player(player.p_row,player.p_col,player.p_counter) 
+        stack_move.append((undo,player1))
+
         player.p_row = new_row
         player.p_col = new_col
         player.p_counter += 1
+        
+
+        
+
   
 
 def check_win_condition(board):
@@ -161,12 +175,24 @@ def check_win_condition(board):
         return True
     else:
         return False
-    
+
+def copy_board(board):
+    copyboard = []
+    for i in range(ROWS):
+        row = []
+        for j in range(COLS):  
+            tile = board[i][j]
+            new_tile = Tile(tile.base,tile.box)
+            row.append(new_tile)
+        copyboard.append(row)
+    return copyboard
+
 ################################################################################
 ############################## MAIN FUNCTIONS ##################################
 ###############################################################################
 
 def main():
+    
     board = []
     init_board(board)
     print("=== Level Setup ===")
@@ -178,6 +204,10 @@ def main():
             if line[0] == "q":
                 p_row, p_col = set_player_location(board)
                 player = Player(p_row,p_col)
+                board_setup = copy_board(board)
+                player_row = p_row
+                player_col = p_col
+
                 break
             elif len(line) == 5:
                 command = line[0]
@@ -197,7 +227,7 @@ def main():
                 
             else:
                 continue
-    
+                
             if command == "w":
                 board[row][col].base = Base.WALL
                 board[row][col].box = False
@@ -224,25 +254,40 @@ def main():
                         if not is_outofbounds(i,col1):
                             board[i][col1].base = Base.WALL
                             board[i][col1].box = False
-                
-
             print_board(board, -1, -1)
         except KeyboardInterrupt:
             break
     
+
     while True:
         try:
-
             command = input("> ")
             if command in ["w","a","s","d"]:
+                
                 move_player(board,command,player)
-                if check_win_condition(board):
+                if check_win_condition(board):  
                     if player.p_counter == 1:
                         print(f"=== Level Solved in {player.p_counter} Move! ===")
                     else:
                         print(f"=== Level Solved in {player.p_counter} Moves! ===")
+                    
             elif command == "c":
                 print(f"Number of moves so far: {player.p_counter}")
+            elif command == "r":
+                board = board_setup
+                player.p_row = player_row
+                player.p_col = player_col
+                player.p_counter = 0
+                board_setup = copy_board(board)
+            elif command == "u":
+                if player.p_counter>0:
+                     player.p_counter -= 1
+                else:
+                    player.p_counter = 0
+                previous_board,previous_player = stack_move.pop()
+                board = previous_board
+                player = previous_player
+
             print_board(board,player.p_row,player.p_col)
 
 
@@ -253,3 +298,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+stack_move = ['a', 'a', 'a']
+
