@@ -118,7 +118,7 @@ def set_player_location(board):
 
 
  
-def move_player(board,move,player,):
+def move_player(board,move,player):
     deltas = {
         "w":(-1,0),
         "s":(1,0),
@@ -134,20 +134,41 @@ def move_player(board,move,player,):
     target_tile = board[new_row][new_col]
     
     if target_tile.box:
+        box_move = []
         box_new_row = (new_row+delta_row)%ROWS
         box_new_col = (new_col+delta_col)%COLS
-
         box_target_tile = board[box_new_row][box_new_col]
-        if box_target_tile.base != Base.WALL and not box_target_tile.box: 
-            box_target_tile.box = True
-            target_tile.box = False
 
+        box_move.append((new_row,new_col))
+        box_move.append((box_new_row,box_new_col))
+        while box_target_tile.box:  
+            box_new_row = (box_new_row+delta_row)%ROWS
+            box_new_col = (box_new_col+delta_col)%COLS   
+            box_target_tile = board[box_new_row][box_new_col]
+            box_move.append((box_new_row,box_new_col))
+        print(box_move)
+        box_move.pop()
 
+        if box_target_tile.base == Base.WALL:
+            return 
+        
+        for i in range(len(box_move)-1,-1,-1):
+            next_row = (box_move[i][0] + delta_row)%10
+            next_col = (box_move[i][1] + delta_col)%10
+            board[next_row][next_col].box = True
+
+            if i == 0:
+                board[box_move[i][0]][box_move[i][1]].box = False
+
+        player1 = Player(player.p_row,player.p_col,player.p_counter) 
+        stack_move.append((undo,player1))
+        
+        player.p_counter += 1
+        player.p_row = new_row
+        player.p_col = new_col
             
-        else:
-            return
     
-    if target_tile.base == Base.WALL:
+    elif target_tile.base == Base.WALL:
         return
     else:
         player1 = Player(player.p_row,player.p_col,player.p_counter) 
@@ -300,6 +321,4 @@ if __name__ == "__main__":
     main()
 
 
-
-stack_move = ['a', 'a', 'a']
 
