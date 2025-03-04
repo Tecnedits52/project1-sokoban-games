@@ -1,3 +1,7 @@
+import copy
+
+
+
 # Constants
 ROWS = 10
 COLS = 10
@@ -5,6 +9,8 @@ COLS = 10
 # Variables
 stack_move = [] 
 link_groups = {}
+move_box_line = []
+update_group_box = []
 # Every tile on the map has to be one of the following values.
 class Base:
     NONE = 0
@@ -116,9 +122,70 @@ def set_player_location(board):
             print(f"Position ({p_row}, {p_col}) is invalid\n")
             continue
 
+def find_box_line(board,row,col, delta_row, delta_col):
+    tile = board[row][col]  # 0,1                               2,3
+    boxes = []  # [(0,1)]                                       [(2,3)]
+    update_group = [] # [(0,1)]                                 [(2,3)]
 
+    # link_group = [{(0, 1): [], (2, 3): []}]
+    while tile.box:
+        box_pos = (row, col) # 0,1          (2,3)
+        boxes.append(box_pos)
+        link_pos = link_groups.get(box_pos,[]) # [(2, 3)]           []    
+
+        if link_pos:
+
+            link_pos.remove(box_pos)
+            update_group.append(box_pos)
+            for r,c in link_pos:
+                if delta_col == 1 or delta_col == -1 and r==row:
+                    break
+                if delta_row == 1 or delta_row == -1 and c==col:
+                    break
+                box_line = find_box_line(board,r,c,delta_row,delta_col)
+                move_box_line.append(box_line) # move_box_line = [[(2,3)], ]
+            
+        next_row = (row+delta_row)%10
+        next_col = (col+delta_col)%10
+        tile = board[next_row][next_col]
+        row = next_row 
+        col = next_col
+        
+    if tile.base == Base.WALL:
+        # link_pos = link_pos + boxes
+        link_pos.extend(boxes)      # [1,2,3] + [9,1] = [1,2,3,9,1]
+        return []
+    else:
+        update_group_box.extend(update_group) # [(2,3), (0,1)]
+        return boxes
+
+        
+
+
+def copy_link_groups(link_groups):
+    copy = {}
+
+    for key in link_groups.keys():
+        values = []
+        for position in link_groups[key]:
+            p = (position[0],position[1])
+            values.append(p)
+        copy[key] = values        
+    print(f"copy link group = {copy}")
+    return copy
+    
+
+# {(0,1): [(0,1),(2,3)], (2,3): [(0,1),(2,3)], (2,8): []}
+        
+        
+
+    
  
 def move_player(board,move,player):
+
+    global move_box_line
+    global update_group_box
+    
     deltas = {
         "w":(-1,0),
         "s":(1,0),
@@ -127,67 +194,109 @@ def move_player(board,move,player):
     }
     undo = copy_board(board)
     player1 = Player(player.p_row,player.p_col,player.p_counter) 
-    stack_move.append((undo,player1))
-        
+    copy_link_group = copy.deepcopy(link_groups)
+    stack_move.append((undo,player1,copy_link_group))
+    
+    
     # cari new_row dan new_col
     delta_row, delta_col = deltas[move]
     new_row = (player.p_row + delta_row)%ROWS
     new_col = (player.p_col + delta_col)%COLS
     
-    target_tile = board[new_row][new_col]
+    # b 0 1
+    # b 2 3
+    # l 0 1 2 3
+    # q
+    # 0 0
+    # d
+    target_tile = board[new_row][new_col] # 0,1
     
     if target_tile.box:
-        newgroup = []
-        box = (new_row,new_col)
-        group = link_groups.get(box, [box])
-        for r,c in group:
-            box_move = []
-            box_new_row = (r+delta_row)%ROWS
-            box_new_col = (c+delta_col)%COLS
-            box_target_tile = board[box_new_row][box_new_col]
+        move_box_line = []
+        update_group_box = []
+        box_line = find_box_line(board,new_row,new_col,delta_row,delta_col) # [(0,1)] 
+        move_box_line.append(box_line)  # move_box_line = [[(2,3)], [(0,1)] ]
+        
+        print(f"link group = {link_groups}")
+        print(f"move box line = {move_box_line}")
+        print(f"update group box = {update_group_box}") # [(2,3), (0,1)]
 
-            box_move.append((r,c))
-            box_move.append((box_new_row,box_new_col))
-            while box_target_tile.box:  
-                box_new_row = (box_new_row+delta_row)%ROWS
-                box_new_col = (box_new_col+delta_col)%COLS   
-                box_target_tile = board[box_new_row][box_new_col]
-                box_move.append((box_new_row,box_new_col))
-            print(box_move)
-            box_move.pop()
-
-            if box_target_tile.base == Base.WALL:
-                continue
+        if box_line:
+            player.p_row = new_row
+            player.p_col = new_col
+            player.p_counter += 1
+        is_stack_pop = True 
+        for box_to_move in move_box_line:
+            box_to_move = sorted(box_to_move,key=lambda x: x[1])
+            if move == "d" or move == "w":  
+                box_to_move = reversed(box_to_move)
             
-            for i in range(len(box_move)-1,-1,-1):
-                next_row = (box_move[i][0] + delta_row)%10
-                next_col = (box_move[i][1] + delta_col)%10
+            for row, col in box_to_move:
+                next_row = (row+delta_row)%10
+                next_col = (col+delta_col)%10
                 board[next_row][next_col].box = True
-
-                if i == 0:
-                    board[box_move[i][0]][box_move[i][1]].box = False
-            r = (delta_row+r) % ROWS
-            c = (delta_col+c) % COLS
-            new_pos = (r,c)
-            newgroup.append(new_pos)
-
-            if r == new_row and c == new_col:
-                player.p_counter += 1
-                player.p_row = new_row
-                player.p_col = new_col
+                board[row][col].box = False
+                is_stack_pop = False
+        if is_stack_pop:
+            stack_move.pop()
+        # Perbarui `link_group` dengan posisi baru
+        #  update_group_box=[(2,3), (0,1)]  -> new_values=[(2,4), (0,2)]
+        if len(update_group_box) > 0:
+            values = link_groups.get(update_group_box[0])
+            new_values = list(values)
+            for key in update_group_box:
+                del link_groups[key]
                 
-        for pos in group:
-            del link_groups[pos]
-        for i in newgroup:
-            link_groups[i] = newgroup
-            
-        print(link_groups)
+                r, c = key
+                new_key = (r + delta_row) % ROWS, (c + delta_col) % COLS
+                new_values.append(new_key)
+
+            for key in new_values:
+                link_groups[key] = new_values
+
+
+
+        # if update_group_box:
+        #     values = link_groups.get(update_group_box[0])
+        #     new_values = list[values]
+        #     for key in update_group_box:
+        #         new_key = ((key[0] + delta_row)%10, (key[1] + delta_col)%10)
+        #         new_values.append(new_key)
+        #         del link_groups[key]
+
+        #     for key in new_values:
+        #         link_groups[key] = new_values
+        # update_group_box = []
+        # move_box_line = []
+        
+
     elif target_tile.base == Base.WALL:
         stack_move.pop()
         return
     else:
         player.p_counter += 1
-        
+        player.p_row = new_row
+        player.p_col = new_col
+
+def undo(player,board,stack_move):
+    if player.p_counter>0:
+            player.p_counter -= 1        
+    else:
+        player.p_counter = 0
+
+    if stack_move:
+        print("ewdweferger")
+        board.clear()
+        global link_groups
+        previous_board,previous_player, prev_link_groups= stack_move.pop()
+        board += previous_board
+        player.p_row = previous_player.p_row
+        player.p_col = previous_player.p_col
+        link_groups = prev_link_groups 
+
+    else:
+        print("No moves to undo!")
+
 
 def link_boxes(board, row1, col1, row2, col2):
     box1 = row1,col1
@@ -200,15 +309,16 @@ def link_boxes(board, row1, col1, row2, col2):
         print("Invalid Location(s)\n")
         return         
     
-    group1 = link_groups.get(box1, [box1])
-    group2 = link_groups.get(box2, [box2])
-    group = group1+group2
+    group1 = link_groups.get(box1, [box1])  # [(0,1)]
+    group2 = link_groups.get(box2, [box2])  # [(2,3)]
+    group = group1+group2   # [(0,1), (2,3)]
 
+    # {(0,1): [(0,1), (2,3)], (2,3): [(0,1), (2,3)]}
     for i in group:
         link_groups[i] = group
 
     print(f"Linked boxes at {box1} and {box2}")
-    print(link_groups)
+    print(f"link group = {link_groups}")
 
 def check_win_condition(board):
     correct = 0
@@ -257,6 +367,7 @@ def main():
                 player_col = p_col
 
                 break
+
             elif len(line) == 5:
                 command = line[0]
                 row1 = int(line[1])
@@ -272,6 +383,7 @@ def main():
                     print_board(board, -1, -1)
 
                     continue
+                
                 
             else:
                 continue
@@ -333,13 +445,8 @@ def main():
                 player.p_counter = 0
                 board_setup = copy_board(board)
             elif command == "u":
-                if player.p_counter>0:
-                     player.p_counter -= 1
-                else:
-                    player.p_counter = 0
-                previous_board,previous_player = stack_move.pop()
-                board = previous_board
-                player = previous_player
+                undo(player,board,stack_move)
+
 
             print_board(board,player.p_row,player.p_col)
 
