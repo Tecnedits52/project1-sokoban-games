@@ -138,9 +138,10 @@ def find_box_line(board,row,col, delta_row, delta_col):
             link_pos.remove(box_pos)
             update_group.append(box_pos)
             for r,c in link_pos:
-                if delta_col == 1 or delta_col == -1 and r==row:
+                if (delta_col == 1 or delta_col) == -1 and r==row and abs(r-row)==1:
+    
                     break
-                if delta_row == 1 or delta_row == -1 and c==col:
+                if (delta_row == 1 or delta_row) == -1 and c==col and abs(c-col)==1:
                     break
                 box_line = find_box_line(board,r,c,delta_row,delta_col)
                 move_box_line.append(box_line) # move_box_line = [[(2,3)], ]
@@ -227,9 +228,7 @@ def move_player(board,move,player):
             player.p_counter += 1
         is_stack_pop = True 
         for box_to_move in move_box_line:
-            box_to_move = sorted(box_to_move,key=lambda x: x[1])
-            if move == "d" or move == "w":  
-                box_to_move = reversed(box_to_move)
+            box_to_move = reversed(box_to_move)
             
             for row, col in box_to_move:
                 next_row = (row+delta_row)%10
@@ -297,6 +296,9 @@ def undo(player,board,stack_move):
     else:
         print("No moves to undo!")
 
+# def setup_level1():
+# def setup_level2():
+# def setup_level3():
 
 def link_boxes(board, row1, col1, row2, col2):
     box1 = row1,col1
@@ -322,14 +324,14 @@ def link_boxes(board, row1, col1, row2, col2):
 
 def check_win_condition(board):
     correct = 0
-    num_box = 0
+    num_storage = 0
     for i in range(ROWS):
         for j in range(COLS):
             if board[i][j].box == True and board[i][j].base == Base.STORAGE:
                     correct += 1
-            if board[i][j].box == True:
-                    num_box += 1
-    if num_box == correct:
+            if board[i][j].base == Base.STORAGE:
+                    num_storage += 1
+    if num_storage == correct:
         return True
     else:
         return False
@@ -345,17 +347,82 @@ def copy_board(board):
         copyboard.append(row)
     return copyboard
 
-################################################################################
-############################## MAIN FUNCTIONS ##################################
-###############################################################################
+# w 3 2
+# w 3 7
+# W 2 2 2 7
+# W 4 2 4 7
+# s 3 6
+# b 3 4
+# q
+# 3 3
+# d
+# d
+def setup_level1(board):
+    preset1 = [
+        'w 3 2',
+        'w 3 7',
+        'W 2 2 2 7',
+        'W 4 2 4 7',
+        's 3 6',
+        'b 3 4',
+        'q 3 3'
+    ]
 
-def main():
-    
-    board = []
-    init_board(board)
-    print("=== Level Setup ===")
+    i = 0
+    while i < len(preset1):  
+        command = preset1[i][0]
+        if command in ['W', 'l']:
+            row1 = int(preset1[i][2])
+            col1 = int(preset1[i][4])
+            row2 = int(preset1[i][6])
+            col2 = int(preset1[i][8])
+        elif command in ["w","b","s"]:
+            row = int(preset1[i][2])
+            col = int(preset1[i][4])
+        elif command == "q":
+            p_row = int(preset1[i][2])
+            p_col = int(preset1[i][4])
+
+        if command == "w":
+            board[row][col].base = Base.WALL
+            board[row][col].box = False
+        elif command == "s":
+            board[row][col].base = Base.STORAGE
+        elif command == "b":
+            if board[row][col].base == Base.WALL:
+                board[row][col].base = Base.NONE
+                board[row][col].box = True
+            else:
+                board[row][col].box = True
+        elif command == "W":
+            if is_outofbounds(row1,col1) and is_outofbounds(row2,col2):
+                print("Location out of bounds")
+                print_board(board, -1, -1)
+                continue
+            if row1 == row2:
+                for i in range(col1,col2+1):
+                    if not is_outofbounds(row1,i):
+                        board[row1][i].base = Base.WALL
+                        board[row1][i].box = False    
+            if col1 == col2:
+                for i in range(row1, row2+1):
+                    if not is_outofbounds(i,col1):
+                        board[i][col1].base = Base.WALL
+                        board[i][col1].box = False
+        elif command == "l":
+            link_boxes(board, row1, col1, row2, col2)
+        i += 1
+
+    data_reset = ()                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+    player = Player(p_row,p_col)
+    board_setup = copy_board(board)
+    data_reset = (board_setup,p_row,p_col)
+    return (player,data_reset)
+
+def manual_setup(board):
     line = []
-    
+    player = None
+    data_reset = ()
     while True:
         try:
             line = input("> ").split(" ")
@@ -365,9 +432,8 @@ def main():
                 board_setup = copy_board(board)
                 player_row = p_row
                 player_col = p_col
-
+                data_reset = (board_setup,player_row,player_col)
                 break
-
             elif len(line) == 5:
                 command = line[0]
                 row1 = int(line[1])
@@ -381,10 +447,7 @@ def main():
                 if is_outofbounds(row,col) == True:
                     print("Location out of bounds")
                     print_board(board, -1, -1)
-
                     continue
-                
-                
             else:
                 continue
                 
@@ -422,8 +485,12 @@ def main():
 
         except KeyboardInterrupt:
             break
-    
+    return (player, data_reset)
 
+def play_game(board,player,data_reset):
+    board_setup = data_reset[0]
+    player_row = data_reset[1]
+    player_col = data_reset[2]
     while True:
         try:
             command = input("> ")
@@ -433,9 +500,12 @@ def main():
                 if check_win_condition(board):  
                     if player.p_counter == 1:
                         print(f"=== Level Solved in {player.p_counter} Move! ===")
+                        print_board(board,player.p_row,player.p_col)
+                        break
                     else:
                         print(f"=== Level Solved in {player.p_counter} Moves! ===")
-                    
+                        print_board(board,player.p_row,player.p_col)
+                        break
             elif command == "c":
                 print(f"Number of moves so far: {player.p_counter}")
             elif command == "r":
@@ -447,13 +517,28 @@ def main():
             elif command == "u":
                 undo(player,board,stack_move)
 
-
             print_board(board,player.p_row,player.p_col)
-
-
         except KeyboardInterrupt:
             break
-                                                                                                                                                                                                                                                                                                                 
+                                
+
+################################################################################
+############################## MAIN FUNCTIONS ##################################
+###############################################################################
+
+def main():
+    
+    board = []
+    init_board(board)
+    print("=== Level Setup ===")
+    # player, data_reset = manual_setup(board)
+
+    player, data_reset = setup_level1(board)
+    play_game(board,player,data_reset)
+    # player, data_reset = setup_level2()
+    # play_game(board,player,data_reset)
+    # player, data_reset = setup_level3() 
+    # play_game(board,player,data_reset)                                                                                                                                                                                                                                                                                              
 
 
 if __name__ == "__main__":
