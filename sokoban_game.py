@@ -357,31 +357,34 @@ def copy_board(board):
 # 3 3
 # d
 # d
-def setup_level1(board):
-    preset1 = [
-        'w 3 2',
-        'w 3 7',
-        'W 2 2 2 7',
-        'W 4 2 4 7',
-        's 3 6',
-        'b 3 4',
-        'q 3 3'
-    ]
+def setup_level(board,preset):
+    # preset1 = [
+    #     'w 3 2',
+    #     'w 3 7',
+    #     'W 2 2 2 7',
+    #     'W 4 2 4 7',
+    #     's 3 6',
+    #     'b 3 4',
+    #     'q 3 3'
+    # ]
+
+    p_row = 0
+    p_col = 0
 
     i = 0
-    while i < len(preset1):  
-        command = preset1[i][0]
+    while i < len(preset):  
+        command = preset[i][0]
         if command in ['W', 'l']:
-            row1 = int(preset1[i][2])
-            col1 = int(preset1[i][4])
-            row2 = int(preset1[i][6])
-            col2 = int(preset1[i][8])
+            row1 = int(preset[i][2])
+            col1 = int(preset[i][4])
+            row2 = int(preset[i][6])
+            col2 = int(preset[i][8])
         elif command in ["w","b","s"]:
-            row = int(preset1[i][2])
-            col = int(preset1[i][4])
+            row = int(preset[i][2])
+            col = int(preset[i][4])
         elif command == "q":
-            p_row = int(preset1[i][2])
-            p_col = int(preset1[i][4])
+            p_row = int(preset[i][2])
+            p_col = int(preset[i][4])
 
         if command == "w":
             board[row][col].base = Base.WALL
@@ -399,16 +402,17 @@ def setup_level1(board):
                 print("Location out of bounds")
                 print_board(board, -1, -1)
                 continue
+            # W 2 2 2 7
             if row1 == row2:
-                for i in range(col1,col2+1):
-                    if not is_outofbounds(row1,i):
-                        board[row1][i].base = Base.WALL
-                        board[row1][i].box = False    
+                for j in range(col1,col2+1):
+                    if not is_outofbounds(row1,j):
+                        board[row1][j].base = Base.WALL
+                        board[row1][j].box = False    
             if col1 == col2:
-                for i in range(row1, row2+1):
-                    if not is_outofbounds(i,col1):
-                        board[i][col1].base = Base.WALL
-                        board[i][col1].box = False
+                for j in range(row1, row2+1):
+                    if not is_outofbounds(j,col1):
+                        board[j][col1].base = Base.WALL
+                        board[j][col1].box = False
         elif command == "l":
             link_boxes(board, row1, col1, row2, col2)
         i += 1
@@ -417,7 +421,7 @@ def setup_level1(board):
     player = Player(p_row,p_col)
     board_setup = copy_board(board)
     data_reset = (board_setup,p_row,p_col)
-    return (player,data_reset)
+    return (player, data_reset)
 
 def manual_setup(board):
     line = []
@@ -491,11 +495,11 @@ def play_game(board,player,data_reset):
     board_setup = data_reset[0]
     player_row = data_reset[1]
     player_col = data_reset[2]
+    print_board(board,player.p_row,player.p_col)
     while True:
         try:
             command = input("> ")
             if command in ["w","a","s","d"]:
-                
                 move_player(board,command,player)
                 if check_win_condition(board):  
                     if player.p_counter == 1:
@@ -525,16 +529,80 @@ def play_game(board,player,data_reset):
 ################################################################################
 ############################## MAIN FUNCTIONS ##################################
 ###############################################################################
+preset1 = [
+    'w 3 2',
+    'w 3 7',
+    'W 2 2 2 7',
+    'W 4 2 4 7',
+    's 3 6',
+    'b 3 4',
+    'q 3 3'
+]
+preset2 = [
+    'W 3 0 3 2',
+    'W 0 2 2 2',
+    'W 0 3 0 4',
+    'W 0 4 2 4',
+    'W 2 4 2 7',
+    'W 2 7 4 7',
+    'W 4 5 4 7',
+    'W 4 5 7 5',
+    'W 7 3 7 5',
+    'W 5 3 7 3',
+    'W 5 0 5 2',
+    'w 4 0',
+    's 1 3',
+    's 4 1',
+    's 3 6',
+    's 6 4',
+    'b 3 3',
+    'b 4 3',
+    'b 3 5',
+    'b 5 4',
+    'q 4 4'
+
+]
+preset3 = [
+    'W 0 0 0 4',
+    'W 0 4 4 4',
+    'W 4 4 4 6',
+    'W 2 6 4 6',
+    'W 2 6 2 8',
+    'W 2 8 7 8',
+    'W 7 5 7 8',
+    'W 6 5 8 5',
+    'W 8 1 8 5',
+    'W 4 1 8 1',
+    'W 4 2 5 2',
+    'W 0 0 4 0',
+    'b 2 2',
+    'b 3 2',
+    'b 3 3',
+    's 3 7',
+    's 4 7',
+    's 5 7',
+    'q 2 3'
+
+]
+
+
+presets = [preset1, preset2, preset3]
+
+
+
 
 def main():
-    
-    board = []
-    init_board(board)
-    print("=== Level Setup ===")
-    # player, data_reset = manual_setup(board)
+    level_number = 1
+    while level_number <= 3:
+        board = []
+        init_board(board)
+        print(f"=== Level {level_number} ===")
+        player, data_reset = setup_level(board,presets[level_number-1])
+        play_game(board,player,data_reset)
+        level_number += 1
+    print("=== GAME COMPLETED! ===")
 
-    player, data_reset = setup_level1(board)
-    play_game(board,player,data_reset)
+    # player, data_reset = manual_setup(board)
     # player, data_reset = setup_level2()
     # play_game(board,player,data_reset)
     # player, data_reset = setup_level3() 
@@ -546,3 +614,10 @@ if __name__ == "__main__":
 
 
 
+
+# === Level 1 ===
+# === Level 2 ===
+# === Level 3 ===
+# === Level 4 ===
+# === Level 5 ===
+# Game Finish

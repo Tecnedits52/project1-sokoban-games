@@ -1,1 +1,1 @@
- return (player,data_reset)
+ print(board,player.p_row,player.p_col)
